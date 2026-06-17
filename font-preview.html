@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>涂鸦字体挑选</title>
+<link href="https://fonts.loli.net/css2?family=ZCOOL+KuaiLe&family=ZCOOL+QingKe+HuangYou&family=Liu+Jian+Mao+Cao&family=Long+Cang&family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:#fafaf9;
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    color:#1a1a1a;
+    padding:40px 24px;
+    max-width:800px;
+    margin:0 auto;
+  }
+  h1{
+    font-size:1.6rem;margin-bottom:8px;
+    border-bottom:3px solid #588b6f;
+    padding-bottom:12px;
+    display:inline-block;
+  }
+  .note{
+    font-size:.85rem;color:#777;margin-bottom:32px;
+    padding:10px 14px;background:#eaf2ed;
+    border-left:3px solid #588b6f;
+  }
+  .sample{
+    margin-bottom:36px;
+    padding:20px 24px;
+    background:#fff;
+    border:2px solid #1a1a1a;
+    border-radius:10px 18px 10px 14px;
+  }
+  .sample.active{
+    border-color:#588b6f;
+    border-width:3px;
+    background:#f6faf7;
+  }
+  .sample h2{
+    font-size:1rem;color:#588b6f;margin-bottom:6px;
+  }
+  .sample .cn{
+    font-size:2rem;margin-bottom:6px;line-height:1.5;
+  }
+  .sample .en{
+    font-size:1.1rem;color:#555;margin-bottom:4px;
+  }
+  .sample .desc{
+    font-size:.78rem;color:#999;
+  }
+  .badge{
+    display:inline-block;padding:2px 8px;
+    background:#588b6f;color:#fff;
+    border-radius:10px 3px 10px 3px;
+    font-size:.7rem;margin-left:6px;
+    vertical-align:middle;
+  }
+</style>
+</head>
+<body>
+
+<h1>涂鸦风格字体预览</h1>
+<p style="margin-top:10px;margin-bottom:24px;color:#588b6f;">当前使用 → <strong style="font-family:'ZCOOL KuaiLe';font-size:1.2rem;">ZCOOL KuaiLe 站酷快乐体</strong></p>
+
+<div class="note">
+  挑选你喜欢的字体，告诉我编号即可替换。每种字体都展示了中文和英文的显示效果。
+</div>
+
+<!-- 1 -->
+<div class="sample active" id="f1">
+  <h2>① ZCOOL KuaiLe 站酷快乐体 <span class="badge">当前使用</span></h2>
+  <div class="cn" style="font-family:'ZCOOL KuaiLe';">我的数据小馆 / 你好世界</div>
+  <div class="en" style="font-family:'ZCOOL KuaiLe';">Hello World · Data Lover</div>
+  <div class="desc">圆润可爱，笔画轻松随意，有手写涂鸦感，辨识度高</div>
+</div>
+
+<!-- 2 -->
+<div class="sample" id="f2">
+  <h2>② ZCOOL QingKe HuangYou 站酷庆科黄油体</h2>
+  <div class="cn" style="font-family:'ZCOOL QingKe HuangYou';">我的数据小馆 / 你好世界</div>
+  <div class="en" style="font-family:'ZCOOL QingKe HuangYou';">Hello World · Data Lover</div>
+  <div class="desc">类似快乐体但笔画更方，更"笨拙"可爱，像马克笔写的</div>
+</div>
+
+<!-- 3 -->
+<div class="sample" id="f3">
+  <h2>③ Liu Jian Mao Cao 柳建毛草</h2>
+  <div class="cn" style="font-family:'Liu Jian Mao Cao';">我的数据小馆 / 你好世界</div>
+  <div class="en" style="font-family:'Liu Jian Mao Cao';">Hello World · Data Lover</div>
+  <div class="desc">行草风格，笔画飞白明显，极有速写质感，像铅笔/钢笔快写</div>
+</div>
+
+<!-- 4 -->
+<div class="sample" id="f4">
+  <h2>④ Long Cang 龙藏体</h2>
+  <div class="cn" style="font-family:'Long Cang';">我的数据小馆 / 你好世界</div>
+  <div class="en" style="font-family:'Long Cang';">Hello World · Data Lover</div>
+  <div class="desc">随性手写体，笔画松散不拘束，有日记涂鸦的轻松感</div>
+</div>
+
+<!-- 5 -->
+<div class="sample" id="f5">
+  <h2>⑤ Zhi Mang Xing 志莽行书</h2>
+  <div class="cn" style="font-family:'Zhi Mang Xing';">我的数据小馆 / 你好世界</div>
+  <div class="en" style="font-family:'Zhi Mang Xing';">Hello World · Data Lover</div>
+  <div class="desc">毛笔行书风，笔画粗细变化大，有书法笔触但保持随性</div>
+</div>
+
+<!-- 6 -->
+<div class="sample" id="f6">
+  <h2>⑥ Ma Shan Zheng 马山正楷</h2>
+  <div class="cn" style="font-family:'Ma Shan Zheng';">我的数据小馆 / 你好世界</div>
+  <div class="en" style="font-family:'Ma Shan Zheng';">Hello World · Data Lover</div>
+  <div class="desc">书法正楷，比毛草更规整但仍手写感强，像硬笔书法</div>
+</div>
+
+<!-- 7 -->
+<div class="sample" id="f7">
+  <h2>⑦ ZCOOL XiaoWei 站酷小薇体</h2>
+  <div class="cn" style="font-family:'ZCOOL XiaoWei';">我的数据小馆 / 你好世界</div>
+  <div class="en" style="font-family:'ZCOOL XiaoWei';">Hello World · Data Lover</div>
+  <div class="desc">俏皮可爱型，像手账/手绘卡片字体，比快乐体更纤细精致</div>
+</div>
+
+</body>
+</html>

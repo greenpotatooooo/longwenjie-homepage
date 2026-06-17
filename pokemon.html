@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>冠军纪念馆 · 训练师档案</title>
+<link href="https://fonts.loli.net/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  /* ===== GameBoy Palette ===== */
+  :root {
+    --g0: #0f380f; --g1: #306230; --g2: #8bac0f; --g3: #9bbc0f;
+    --bg:   #e0f0d0;
+    --card: #f8fcf0;
+    --ink:  #1a2e0a;
+    --gold: #c8a02a;
+    --gold-light: #f0d060;
+    --pixel: "Zpix", "Press Start 2P", "SimHei", "Microsoft YaHei", monospace;
+  }
+
+  @font-face {
+    font-family:'Zpix';src:url('https://cdn.jsdelivr.net/npm/zpix@3.1.8/dist/Zpix.woff2') format('woff2');
+    font-display:swap;
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;font-size:16px;}
+
+  body{
+    font-family:var(--pixel);
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    overflow-x:hidden;
+    cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 60 60'%3E%3Cpath d='M30 4 C48 3 56 17 56 30 C56 43 48 57 30 56 C12 55 4 43 4 30 C4 17 12 3 30 4Z' fill='white' stroke='%231a2e0a' stroke-width='3'/%3E%3Cpath d='M5 30 L55 30' stroke='%231a2e0a' stroke-width='2.5'/%3E%3Ccircle cx='30' cy='30' r='5' fill='white' stroke='%231a2e0a' stroke-width='2'/%3E%3C/svg%3E") 14 14, auto;
+    image-rendering:pixelated;
+  }
+
+  /* ===== Loading Screen ===== */
+  #loader{
+    position:fixed;inset:0;z-index:9999;
+    background:var(--g0);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    transition:transform .6s cubic-bezier(.4,0,.2,1),opacity .6s;
+  }
+  #loader.hide{
+    transform:translateY(-100%);
+    opacity:0;visibility:hidden;pointer-events:none;
+  }
+
+  .pokeball-loader{
+    width:96px;height:96px;position:relative;
+    animation:pokebounce 1.2s ease-in-out infinite;
+  }
+  @keyframes pokebounce{
+    0%,100%{transform:translateY(0) scale(1);}
+    30%{transform:translateY(-22px) scale(1.08,0.92);}
+    50%{transform:translateY(0) scale(0.95,1.05);}
+    70%{transform:translateY(-8px) scale(1.02,0.98);}
+  }
+  .pokeball-loader svg{width:100%;height:100%;}
+  .pokeball-loader.stopped{animation:none;transform:scale(1);}
+
+  .loader-text{
+    margin-top:24px;
+    color:var(--g3);font-family:var(--pixel);font-size:13px;
+    letter-spacing:4px;
+  }
+  .press-start{
+    margin-top:32px;font-family:var(--pixel);font-size:16px;
+    color:var(--g3);letter-spacing:6px;
+    animation:pressBlink .8s step-end infinite;
+    opacity:0;transition:opacity .5s;
+  }
+  .press-start.show{opacity:1;}
+  @keyframes pressBlink{
+    0%,100%{color:var(--g3);}
+    50%{color:transparent;}
+  }
+  .press-hint{
+    font-family:var(--pixel);font-size:8px;color:var(--g1);
+    letter-spacing:2px;margin-top:16px;opacity:0;
+    transition:opacity .5s;
+  }
+  .press-hint.show{opacity:.6;}
+
+  /* ===== Status Bar ===== */
+  #status-bar{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    background:var(--g0);color:var(--g3);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 22px;
+    font-family:var(--pixel);font-size:12px;
+    border-bottom:4px solid var(--g1);
+    transition:background .4s,color .4s,border-color .4s;
+    letter-spacing:1px;
+    transform:translateZ(0);
+    will-change:transform;
+  }
+  #status-bar.gold{background:var(--gold);color:#3a2000;border-color:#8a6010;}
+
+  .status-left{display:flex;align-items:center;gap:10px;}
+  .status-avatar{
+    width:36px;height:36px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .status-avatar img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;}
+  .status-location{
+    display:flex;align-items:center;gap:6px;
+  }
+  .status-location .arrow{color:var(--g2);}
+
+  .badge-slot{
+    display:inline-block;width:28px;height:28px;
+    background:var(--g0);border:2px solid var(--g1);
+    border-radius:3px;margin-left:4px;
+    transition:all .35s ease;
+    image-rendering:pixelated;
+    vertical-align:middle;
+    overflow:hidden;
+    position:relative;
+  }
+  .badge-slot img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;opacity:0;transition:opacity .35s;}
+  .badge-slot.unlocked img{opacity:1;}
+  .badge-slot.unlocked{
+    box-shadow:0 0 8px var(--gold-light);
+    border-color:var(--gold);
+    background:var(--card);
+  }
+
+  /* ===== Scroll Container ===== */
+  #main-scroll{
+    overflow-y:scroll;height:100vh;
+    padding-top:48px;
+    position:relative;
+    scrollbar-width:none;
+    -ms-overflow-style:none;
+    overscroll-behavior:none;
+  }
+  #main-scroll::-webkit-scrollbar{display:none;}
+
+  /* ===== Panel ===== */
+  .panel{
+    height:calc(100vh - 48px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:30px 28px;
+    position:relative;
+    overflow:hidden;
+    will-change:transform;
+  }
+
+  /* Pixel section dividers */
+  .panel::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:5px;
+    background:repeating-linear-gradient(90deg,var(--g1) 0,var(--g1) 10px,transparent 10px,transparent 20px);
+  }
+
+  /* Panel backgrounds */
+  .panel-1{background:var(--bg);}
+  .panel-2{background:#d8ebc8;}
+  .panel-3{background:#f5f0e0;}
+
+  /* ===== Pixel Card ===== */
+  .pixel-card{
+    background:var(--card);
+    border:4px solid var(--ink);
+    padding:54px 45px;
+    max-width:840px;width:100%;
+    position:relative;
+    box-shadow:5px 5px 0 var(--g1);
+    image-rendering:pixelated;
+  }
+  .pixel-card h2{
+    font-family:var(--pixel);font-size:20px;
+    color:var(--g0);margin-bottom:30px;
+    text-align:center;letter-spacing:3px;
+  }
+  .pixel-card.gold-card{
+    border-color:var(--gold);
+    box-shadow:5px 5px 0 #8a6010;
+  }
+  .pixel-card.gold-card h2{color:#6a4000;}
+
+  /* ===== Panel 1: Pallet Town Background ===== */
+  .pallet-sky{
+    position:absolute;inset:0;overflow:hidden;pointer-events:none;
+  }
+  .pallet-cloud{
+    position:absolute;background:var(--card);opacity:.7;
+    border:2px solid var(--g2);
+    image-rendering:pixelated;
+  }
+  .pallet-cloud.c1{
+    width:80px;height:24px;top:8%;left:-90px;
+    animation:cloudFloat 20s linear infinite;
+    border-radius:2px;
+  }
+  .pallet-cloud.c2{
+    width:60px;height:20px;top:18%;left:-70px;
+    animation:cloudFloat 26s linear infinite 5s;
+    border-radius:2px;
+  }
+  .pallet-cloud.c3{
+    width:70px;height:22px;top:12%;left:-80px;
+    animation:cloudFloat 22s linear infinite 10s;
+    border-radius:2px;
+  }
+  @keyframes cloudFloat{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(calc(100vw + 180px));}
+  }
+
+  .pixel-grass{
+    position:absolute;bottom:0;left:0;right:0;height:40px;
+    background:repeating-linear-gradient(90deg,
+      var(--g2) 0,var(--g2) 2px,var(--g1) 2px,var(--g1) 4px,
+      var(--g2) 4px,var(--g2) 6px,var(--g1) 6px,var(--g1) 8px,
+      var(--g2) 8px,var(--g2) 10px,var(--g0) 10px,var(--g0) 12px,
+      var(--g2) 12px,var(--g2) 14px,var(--g0) 14px,var(--g0) 16px);
+    animation:grassWave 3s ease-in-out infinite;
+    image-rendering:pixelated;
+    pointer-events:none;
+  }
+  @keyframes grassWave{
+    0%,100%{transform:translateX(0);}
+    50%{transform:translateX(4px);}
+  }
+
+  /* House dialog */
+  .house-dialog{
+    position:absolute;top:-50px;left:50%;transform:translateX(-50%);
+    background:var(--card);border:3px solid var(--ink);
+    padding:8px 14px;font-family:var(--pixel);font-size:9px;
+    color:var(--g0);white-space:nowrap;opacity:0;
+    transition:opacity .3s;pointer-events:none;
+    box-shadow:3px 3px 0 var(--g1);
+    z-index:5;
+  }
+  .house-dialog.show{opacity:1;}
+  .house-clickable{
+    cursor:pointer;transition:transform .15s;
+  }
+  .house-clickable:hover{transform:scale(1.05);}
+  .house-clickable:active{transform:scale(.95);}
+  .trainer-card{
+    display:flex;gap:24px;align-items:flex-start;
+  }
+  .trainer-avatar-large{
+    width:180px;height:180px;
+    border:4px solid var(--ink);
+    background:var(--bg);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    image-rendering:pixelated;
+  }
+  .trainer-info{flex:1;}
+  .trainer-info .label{
+    font-size:15px;color:var(--g1);letter-spacing:1.5px;
+    margin-bottom:4px;font-family:var(--pixel);
+  }
+  .trainer-info .value{
+    font-size:20px;color:var(--ink);
+    margin-bottom:18px;font-family:var(--pixel);
+    letter-spacing:1px;
+  }
+  .trainer-info .name{
+    font-size:27px;font-weight:bold;
+    letter-spacing:3px;margin-bottom:8px;
+  }
+  .bio-text{
+    font-size:20px;line-height:2;color:var(--g1);
+    font-family:var(--pixel);letter-spacing:1px;
+  }
+
+  /* ===== Panel 2: Radar Chart + Snorlax ===== */
+  .lab-layout{
+    display:flex;gap:32px;align-items:center;flex-wrap:wrap;
+    justify-content:center;max-width:640px;width:100%;
+  }
+  #radar-canvas{display:block;image-rendering:pixelated;}
+  .snorlax-box{
+    text-align:center;
+  }
+  .snorlax-box img{
+    width:150px;height:150px;object-fit:contain;
+    image-rendering:pixelated;
+  }
+  .snorlax-box .partner-label{
+    font-family:var(--pixel);font-size:10px;color:var(--g1);
+    letter-spacing:1.5px;margin-top:10px;
+  }
+  .skill-tags{
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+    margin-top:16px;
+    max-width:560px;
+  }
+  .skill-tag{
+    font-family:var(--pixel);font-size:15px;
+    padding:9px 21px;background:var(--card);
+    border:2px solid var(--ink);
+    letter-spacing:1px;
+  }
+
+  /* ===== Panel 3: Holo Project Cards ===== */
+  .project-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);
+    gap:24px;max-width:840px;width:100%;perspective:2000px;
+  }
+
+  .project-card{
+    background:transparent;border:none;box-shadow:none;padding:0;
+    transform-style:preserve-3d;transition:transform .15s ease-out;
+    cursor:pointer;position:relative;
+    height:160px;
+  }
+
+  /* Holo card body */
+  .holo-card{
+    position:relative;width:100%;height:100%;
+    border-radius:12px;overflow:hidden;
+    border:3px solid #c8a02a;
+    box-shadow:0 0 12px rgba(200,160,42,0.3);
+    background:var(--card);
+    transition:box-shadow .3s;
+  }
+
+  /* Holo shine overlay */
+  .holo-shine{
+    position:absolute;inset:0;z-index:3;pointer-events:none;
+    background:
+      radial-gradient(ellipse at var(--mx,50%) var(--my,50%),
+        rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.1) 30%, transparent 60%),
+      linear-gradient(var(--hr,135deg),
+        rgba(255,0,0,0.08) 0%, rgba(255,200,0,0.08) 17%,
+        rgba(0,255,0,0.08) 33%, rgba(0,200,255,0.08) 50%,
+        rgba(100,0,255,0.08) 67%, rgba(255,0,200,0.08) 83%,
+        rgba(255,0,0,0.08) 100%);
+    background-size:100% 100%,300% 300%;
+    mix-blend-mode:color-dodge;
+    animation:holoShift 8s linear infinite;
+    opacity:.65;
+  }
+  @keyframes holoShift{
+    0%{background-position:0 0,0% 0%;}
+    100%{background-position:0 0,200% 200%;}
+  }
+
+  /* Card content wrapper */
+  .holo-content{
+    position:relative;z-index:2;padding:20px 18px;text-align:center;
+    height:100%;display:flex;flex-direction:column;align-items:center;
+    justify-content:space-between;
+  }
+  .project-card .proj-icon{font-size:42px;line-height:1;}
+  .project-card h3{
+    font-family:var(--pixel);font-size:10px;letter-spacing:1.5px;
+    color:var(--g0);margin:0;
+  }
+  .project-card .proj-desc{
+    font-size:9px;color:var(--g1);line-height:1.7;
+    font-family:var(--pixel);letter-spacing:.5px;
+  }
+  .project-card .proj-tag{
+    display:inline-block;padding:3px 8px;font-size:8px;
+    border:2px solid var(--gold);color:#6a4000;
+    font-family:var(--pixel);margin-top:4px;
+  }
+
+  /* Card back (flip) */
+  .holo-back{
+    position:absolute;inset:0;z-index:5;
+    background:var(--card);border:3px solid var(--gold);
+    border-radius:12px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    padding:20px;text-align:center;
+    transition:opacity .3s;opacity:0;pointer-events:none;
+  }
+  .holo-back.show{opacity:1;pointer-events:auto;}
+  .holo-back p{
+    font-family:var(--pixel);font-size:10px;color:var(--g1);
+    line-height:1.8;margin-bottom:6px;
+  }
+  .holo-back .close-back{
+    font-family:var(--pixel);font-size:8px;color:var(--g2);
+    cursor:pointer;margin-top:8px;
+  }
+
+  /* Card hover glow */
+  .project-card:hover .holo-card{box-shadow:0 0 24px rgba(200,160,42,0.6);}
+  .project-card.glow .holo-card{box-shadow:0 0 28px rgba(200,160,42,0.7);}
+
+  /* ===== Gym Panel ===== */
+  .gym-panel{background:linear-gradient(180deg,#c8b898 0%,#a09078 100%) !important;}
+  .gym-layout{display:flex;align-items:center;gap:16px;max-width:840px;width:100%;margin-bottom:12px;}
+  .gym-leader{flex-shrink:0;text-align:center;}
+  .gym-leader img{width:64px;height:64px;image-rendering:pixelated;}
+  .gym-leader span{display:block;font-family:var(--pixel);font-size:10px;color:var(--g0);margin-top:2px;}
+  .gym-title{font-family:var(--pixel);font-size:18px;color:var(--g0);letter-spacing:3px;text-align:center;}
+  .gym-main-card{background:var(--card);border:4px solid var(--gold);padding:18px;max-width:840px;width:100%;margin-bottom:10px;box-shadow:4px 4px 0 #8a6010;}
+  .gym-main-card h3{font-family:var(--pixel);font-size:13px;color:var(--g0);margin-bottom:6px;letter-spacing:1.5px;text-align:center;}
+  .gym-main-card .gym-desc{font-family:var(--pixel);font-size:10px;color:var(--g1);line-height:1.7;text-align:center;margin-bottom:6px;}
+  .gym-main-card .gym-tags{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;}
+  .gym-main-card .gym-tags span{font-family:var(--pixel);font-size:8px;border:2px solid var(--gold);color:#6a4000;padding:2px 8px;}
+  .gym-sub-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:840px;width:100%;margin-bottom:10px;}
+  .gym-sub-card{background:var(--card);border:3px solid var(--ink);padding:10px 6px;text-align:center;transition:transform .2s;cursor:default;box-shadow:2px 2px 0 var(--g1);}
+  .gym-sub-card:hover{transform:translate(-1px,-1px);}
+  .gym-sub-card h4{font-family:var(--pixel);font-size:9px;color:var(--g0);margin-bottom:4px;letter-spacing:.5px;}
+  .gym-sub-card .sub-detail{font-family:var(--pixel);font-size:7px;color:var(--g1);line-height:1.5;display:none;}
+  .gym-sub-card:hover .sub-detail{display:block;}
+  .gym-hp-bar{max-width:840px;width:100%;margin-top:4px;}
+  .gym-hp-bar .hp-label{font-family:var(--pixel);font-size:9px;color:var(--g1);margin-bottom:4px;text-align:center;letter-spacing:1px;}
+  .gym-hp-bar .hp-track{height:10px;background:var(--g1);border:2px solid var(--ink);position:relative;}
+  .gym-hp-bar .hp-fill{height:100%;width:100%;background:var(--g2);}
+
+  /* ===== Cerulean Gym ===== */
+  .water-panel{background:linear-gradient(180deg,#b8d8e8 0%,#6898b0 100%) !important;}
+  .water-boards{display:flex;flex-wrap:wrap;gap:10px;max-width:840px;width:100%;margin-bottom:10px;}
+  .water-main{flex:1 1 360px;background:var(--card);border:4px solid #4488aa;padding:20px;box-shadow:4px 4px 0 #2a5a7a;position:relative;}
+  .water-main h3{font-family:var(--pixel);font-size:15px;color:#2a5a7a;margin-bottom:10px;letter-spacing:1px;}
+  .water-main .new-badge{position:absolute;top:10px;right:10px;background:#ff4444;color:#fff;font-family:var(--pixel);font-size:10px;padding:3px 8px;border:1px solid #000;letter-spacing:1px;}
+  .water-desc{font-family:var(--pixel);font-size:11px;color:var(--g1);line-height:2;}
+  .water-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;flex:1 1 360px;}
+  .water-card{background:var(--card);border:3px solid #4488aa;padding:16px;transition:transform .2s;box-shadow:2px 2px 0 #2a5a7a;}
+  .water-card:hover{transform:translate(-2px,-2px);}
+  .water-card h4{font-family:var(--pixel);font-size:12px;color:#2a5a7a;margin-bottom:6px;letter-spacing:.5px;}
+  .water-card p{font-family:var(--pixel);font-size:10px;color:var(--g1);line-height:1.7;}
+  @keyframes waterRipple{0%,100%{opacity:.3;transform:scale(1);}50%{opacity:.6;transform:scale(1.1);}}
+  .water-ripple{position:absolute;border-radius:50%;border:1px solid rgba(68,136,170,.5);pointer-events:none;animation:waterRipple 3s ease-in-out infinite;}
+  .water-ripple.r1{width:80px;height:80px;top:15%;left:20%;}
+  .water-ripple.r2{width:60px;height:60px;top:50%;right:25%;animation-delay:1s;}
+  .water-ripple.r3{width:50px;height:50px;bottom:20%;left:60%;animation-delay:2s;}
+
+  /* ===== Vermilion Gym - Electric ===== */
+  .elec-panel{background:linear-gradient(180deg,#2a2040 0%,#1a1030 100%) !important;}
+  .elec-wire{position:absolute;left:50%;top:8%;bottom:8%;width:3px;background:linear-gradient(180deg,#ffcc00,#ff8800,#ffcc00,#ff8800,#ffcc00);transform:translateX(-50%);z-index:1;}
+  @keyframes currentFlow{0%{background-position:0 0;}100%{background-position:0 40px;}}
+  .elec-wire::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,#ffcc00 20%,transparent 40%,#ff8800 60%,transparent 80%,#ffcc00 100%);background-size:100% 40px;animation:currentFlow .8s linear infinite;opacity:.8;}
+  .elec-node{position:relative;z-index:2;display:flex;align-items:center;gap:12px;margin:10px 0;padding:8px 12px;background:rgba(42,32,64,.9);border:2px solid #ffcc00;max-width:600px;transition:all .3s;}
+  .elec-node:hover{border-color:#fff;box-shadow:0 0 12px rgba(255,204,0,.4);}
+  .elec-node.left{flex-direction:row;margin-right:auto;margin-left:0;}
+  .elec-node.right{flex-direction:row-reverse;margin-left:auto;margin-right:0;}
+  .elec-bulb{width:16px;height:16px;border-radius:50%;background:#ffcc00;flex-shrink:0;box-shadow:0 0 8px #ffcc00;transition:all .5s;}
+  .elec-bulb.dim{background:#664400;box-shadow:none;}
+  .elec-node h4{font-family:var(--pixel);font-size:10px;color:#ffcc00;margin-bottom:2px;letter-spacing:.5px;}
+  .elec-node p{font-family:var(--pixel);font-size:8px;color:#ccaadd;line-height:1.6;}
+  .elec-spark{position:absolute;pointer-events:none;width:4px;height:4px;background:#ffcc00;border-radius:50%;animation:sparkFade 1s ease-out forwards;opacity:0;}
+  @keyframes sparkFade{0%{opacity:1;transform:scale(1);}50%{opacity:.8;transform:scale(3);}100%{opacity:0;transform:scale(1);}}
+  .elec-footer{font-family:var(--pixel);font-size:10px;color:#ffcc00;margin-top:12px;letter-spacing:2px;text-align:center;}
+  .elec-line{position:absolute;left:calc(50% - 6px);width:12px;height:2px;background:#ffcc00;z-index:2;}/* full */
+
+  /* ===== Pixel decorations ===== */
+  .pixel-stars{
+    position:absolute;pointer-events:none;opacity:.12;
+    font-family:var(--pixel);font-size:16px;color:var(--g1);
+  }
+  .pixel-stars.s1{top:8%;left:6%;}
+  .pixel-stars.s2{top:20%;right:8%;}
+  .pixel-stars.s3{bottom:15%;left:10%;}
+
+  /* ===== Footer ===== */
+  .pixel-footer{
+    text-align:center;padding:24px;font-family:var(--pixel);
+    font-size:10px;color:var(--g1);letter-spacing:1.5px;
+    display:none;
+  }
+
+  /* ===== Scroll indicator ===== */
+  .scroll-indicator{
+    position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    z-index:10;cursor:pointer;
+  }
+  .scroll-indicator img{
+    width:28px;height:28px;image-rendering:pixelated;
+    animation:scrollBounce 1.6s ease-in-out infinite;
+  }
+  @keyframes scrollBounce{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(8px);}
+  }
+  .scroll-indicator span{
+    font-family:var(--pixel);font-size:8px;color:var(--g1);
+    letter-spacing:1px;
+  }
+
+  /* ===== Badge Toast (game-style slide-in) ===== */
+  .badge-toast{
+    position:fixed;top:72px;right:-300px;z-index:200;
+    background:var(--card);border:4px solid var(--ink);
+    padding:12px 18px;font-family:var(--pixel);font-size:10px;
+    box-shadow:5px 5px 0 var(--g1);
+    display:flex;align-items:center;gap:10px;
+    transition:right .4s cubic-bezier(.34,1.56,.64,1);
+    max-width:260px;
+    letter-spacing:1px;
+  }
+  .badge-toast.show{right:16px;}
+  .badge-toast .toast-badge{
+    width:32px;height:32px;flex-shrink:0;
+    image-rendering:pixelated;
+  }
+  .badge-toast .toast-text{color:var(--g0);line-height:1.6;}
+  .badge-toast .toast-text .got{color:var(--g1);font-size:8px;}
+  .badge-toast .toast-line{
+    position:absolute;bottom:-4px;left:8px;right:8px;height:2px;
+    background:var(--g2);animation:toastTimer 2.5s linear forwards;
+  }
+  @keyframes toastTimer{0%{width:100%}100%{width:0%}}
+
+  /* Poke tip popup */
+  #pokeTipPopup{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+    z-index:200;font-family:var(--pixel);
+    background:var(--card);border:5px solid var(--ink);
+    padding:24px 36px;text-align:center;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:6px 6px 0 var(--g1);
+    pointer-events:auto;font-size:14px;
+  }
+  #pokeTipPopup.show{transform:translate(-50%,-50%) scale(1);}
+
+  /* ===== CRT Scanlines ===== */
+  #scanlines-overlay{
+    position:fixed;inset:0;pointer-events:none;z-index:9998;
+    background:repeating-linear-gradient(0deg,
+      rgba(0,0,0,.06),rgba(0,0,0,.06) 1px,
+      transparent 1px,transparent 2px);
+    will-change:transform;transform:translateZ(0);
+  }
+
+  /* ===== Pokemon Center ===== */
+  .contact-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px;max-width:600px;width:100%;
+  }
+  .contact-item{
+    background:var(--card);border:4px solid var(--ink);
+    padding:18px;text-align:center;
+    box-shadow:4px 4px 0 var(--g1);
+    image-rendering:pixelated;
+  }
+  .contact-item .contact-icon{font-size:36px;margin-bottom:8px;}
+  .contact-item h3{font-family:var(--pixel);font-size:10px;color:var(--g0);margin-bottom:4px;letter-spacing:1px;}
+  .contact-item p,.contact-item a{
+    font-family:var(--pixel);font-size:8px;color:var(--g1);letter-spacing:.5px;
+  }
+  .contact-item a{color:var(--g2);text-decoration:underline;}
+
+  .message-board{
+    background:var(--card);border:4px solid var(--ink);
+    padding:20px;max-width:600px;width:100%;
+    box-shadow:4px 4px 0 var(--g1);margin-top:16px;
+  }
+  .message-board h3{font-family:var(--pixel);font-size:11px;color:var(--g0);letter-spacing:2px;text-align:center;margin-bottom:12px;}
+  .message-list{max-height:100px;overflow-y:auto;margin-bottom:10px;font-family:var(--pixel);font-size:9px;color:var(--g1);line-height:2;}
+  .message-input-wrap{display:flex;gap:8px;}
+  .message-input-wrap input{
+    flex:1;background:var(--bg);border:2px solid var(--ink);
+    padding:6px 10px;font-family:var(--pixel);font-size:9px;color:var(--g0);
+  }
+  .message-input-wrap button{
+    background:var(--g2);color:var(--g0);border:none;
+    padding:6px 14px;font-family:var(--pixel);font-size:9px;
+    cursor:pointer;box-shadow:2px 2px 0 var(--g1);
+  }
+
+  /* ===== Forest Panel ===== */
+  .tool-grid{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;
+    max-width:480px;width:100%;margin-top:16px;
+  }
+  .tool-item{
+    background:var(--card);border:2px solid var(--ink);
+    padding:8px 12px;font-family:var(--pixel);font-size:9px;
+    letter-spacing:1px;text-align:center;
+    min-width:72px;
+  }
+
+  /* ===== Champion Team Cards ===== */
+  .champ-pkmn{
+    background:var(--card);border:3px solid var(--gold);
+    padding:10px;text-align:center;
+    image-rendering:pixelated;
+    transition:transform .2s;width:80px;
+    box-shadow:3px 3px 0 #8a6010;
+  }
+  .champ-pkmn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 #8a6010;}
+  .champ-pkmn img{width:64px;height:64px;display:block;margin:0 auto;image-rendering:pixelated;}
+  .champ-pkmn span{display:block;font-family:var(--pixel);font-size:7px;color:var(--g0);margin-top:4px;letter-spacing:1px;}
+
+  /* ===== Responsive ===== */
+  @media(max-width:600px){
+    .trainer-card{flex-direction:column;align-items:center;text-align:center;}
+    .lab-layout{flex-direction:column;}
+    .pixel-card{padding:24px 18px;}
+    .project-grid{grid-template-columns:1fr 1fr;}
+    #status-bar{font-size:9px;padding:8px 12px;}
+    .badge-slot{width:22px;height:22px;font-size:12px;line-height:18px;}
+  }
+
+  /* ===== Prof Oak Dialog ===== */
+  #oak-dialog{
+    position:fixed;inset:0;z-index:900;
+    background:rgba(0,0,0,.7);
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .4s,visibility .4s;
+  }
+  #oak-dialog.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  .oak-box{
+    background:var(--card);border:5px solid var(--ink);
+    padding:32px;max-width:500px;width:90%;
+    box-shadow:6px 6px 0 var(--g1);
+    font-family:var(--pixel);text-align:center;
+    position:relative;
+  }
+  .oak-box .oak-title{font-size:13px;color:var(--g0);letter-spacing:2px;margin-bottom:16px;}
+  .oak-box .oak-msg{font-size:11px;color:var(--g1);line-height:2;margin-bottom:8px;}
+  .oak-box .oak-btn{
+    display:inline-block;margin-top:16px;padding:10px 28px;
+    background:var(--g2);color:var(--g0);border:none;
+    font-family:var(--pixel);font-size:11px;letter-spacing:2px;
+    cursor:pointer;box-shadow:3px 3px 0 var(--g1);
+    transition:transform .15s;
+  }
+  .oak-box .oak-btn:hover{transform:translate(-1px,-1px);}
+  .oak-box .oak-skip{
+    position:absolute;top:8px;right:12px;font-size:9px;color:var(--g1);
+    cursor:pointer;font-family:var(--pixel);
+  }
+
+  /* ===== Project Card Flip ===== */
+  .project-card{
+    perspective:600px;background:transparent;border:none;box-shadow:none;
+  }
+  .project-card .card-inner{
+    position:relative;width:100%;height:100%;
+    transition:transform .5s;
+    transform-style:preserve-3d;
+    cursor:pointer;
+  }
+  .project-card .card-inner.flipped{transform:rotateY(180deg);}
+  .project-card .card-front,.project-card .card-back{
+    backface-visibility:hidden;padding:20px 18px;
+    border:4px solid var(--ink);box-shadow:4px 4px 0 var(--g1);
+    background:var(--card);image-rendering:pixelated;
+  }
+  .project-card .card-back{
+    position:absolute;inset:0;transform:rotateY(180deg);
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;
+  }
+  .project-card .card-back p{
+    font-family:var(--pixel);font-size:10px;color:var(--g1);
+    line-height:1.8;letter-spacing:0.5px;
+    margin-bottom:8px;
+  }
+  .project-card .card-back .flip-hint{
+    font-size:8px;color:var(--g2);
+  }
+  .project-card .proj-icon{font-size:48px;margin-bottom:10px;line-height:1;}
+  .project-card h3{
+    font-family:var(--pixel);font-size:11px;
+    letter-spacing:1.5px;margin-bottom:8px;color:var(--g0);
+  }
+  .project-card .proj-desc{
+    font-size:10px;color:var(--g1);line-height:1.8;
+    font-family:var(--pixel);letter-spacing:0.5px;
+  }
+  .project-card .proj-tag{
+    display:inline-block;margin-top:10px;padding:3px 8px;
+    font-size:9px;border:2px solid var(--gold);
+    color:#6a4000;font-family:var(--pixel);
+  }
+
+  /* Remove old project-card styles that conflict */
+  .project-card:hover{transform:none;box-shadow:none;}
+  .project-grid .project-card .card-inner:hover .card-front{transform:translate(-2px,-2px);box-shadow:6px 6px 0 var(--g1);}
+
+  /* ===== Mini Map ===== */
+  #mini-map{
+    position:fixed;bottom:16px;right:16px;z-index:200;
+    width:120px;height:90px;background:var(--card);
+    border:3px solid var(--ink);box-shadow:3px 3px 0 var(--g1);
+    image-rendering:pixelated;overflow:hidden;
+    transform:translateZ(0);will-change:transform;
+  }
+  #mini-map canvas{width:100%;height:100%;display:block;}
+  #mini-map .map-label{
+    position:absolute;bottom:2px;left:0;right:0;text-align:center;
+    font-family:var(--pixel);font-size:7px;color:var(--g0);
+    pointer-events:none;
+  }
+
+  /* ===== Mouse Footprints Canvas ===== */
+  #footprints-canvas{
+    position:fixed;inset:0;pointer-events:none;z-index:999;
+  }
+
+  /* ===== Bottom Progress Bar ===== */
+  #xp-bar-wrap{
+    position:fixed;bottom:0;left:0;right:0;z-index:150;
+    height:8px;background:var(--g1);
+  }
+  #xp-bar-fill{
+    height:100%;background:var(--g2);
+    transition:width .5s;
+  }
+  #xp-bar-label{
+    position:absolute;right:8px;top:-16px;
+    font-family:var(--pixel);font-size:8px;color:var(--g0);
+    letter-spacing:1px;
+  }
+
+  /* ===== Static wild Pokemon (battle idle style) ===== */
+  .static-poke{
+    position:absolute;z-index:10;
+    image-rendering:pixelated;opacity:.85;
+    left:var(--px,10%);bottom:var(--py,40px);
+  }
+  .static-poke img{image-rendering:pixelated;display:block;width:var(--ps,130px);height:var(--ps,130px);pointer-events:none;}
+  .static-poke .poke-idle{
+    animation:pokeIdle var(--idle-dur,2.5s) ease-in-out infinite;
+    display:block;pointer-events:none;
+  }
+  @keyframes pokeIdle{
+    0%,100%{transform:translateY(0) translateX(0);}
+    25%{transform:translateY(-8px) translateX(-3px);}
+    50%{transform:translateY(-4px) translateX(3px);}
+    75%{transform:translateY(-10px) translateX(-2px);}
+  }
+  .static-poke.ground-l{left:5%;bottom:24px;}
+  .static-poke.ground-l img{width:165px;height:165px;}
+  .static-poke.ground-l2{left:22%;bottom:38px;}
+  .static-poke.ground-l2 img{width:140px;height:140px;}
+  .static-poke.ground-r{right:7%;bottom:28px;}
+  .static-poke.ground-r img{width:150px;height:150px;}
+  .static-poke.ground-r2{right:25%;bottom:50px;}
+  .static-poke.ground-r2 img{width:140px;height:140px;}
+  .static-poke.fly-l{left:6%;bottom:115px;}
+  .static-poke.fly-l img{width:135px;height:135px;}
+  .static-poke.fly-l2{left:20%;bottom:140px;}
+  .static-poke.fly-l2 img{width:120px;height:120px;}
+  .static-poke.fly-r{right:8%;bottom:125px;}
+  .static-poke.fly-r img{width:150px;height:150px;}
+  .static-poke.fly-r2{right:22%;bottom:150px;}
+  .static-poke.fly-r2 img{width:130px;height:130px;}
+  .static-poke.high-l{left:5%;bottom:200px;}
+  .static-poke.high-l img{width:128px;height:128px;}
+  .static-poke.high-r{right:10%;bottom:220px;}
+  .static-poke.high-r img{width:120px;height:120px;}
+  .static-poke.high-r2{right:5%;bottom:250px;}
+  .static-poke.high-r2 img{width:110px;height:110px;}
+
+  /* Random sway variation */
+  .static-poke.p2 .poke-idle{--idle-dur:3.2s;animation-delay:.8s;}
+  .static-poke.p3 .poke-idle{--idle-dur:2.8s;animation-delay:1.5s;}
+
+  /* Alert ! before pokemon */
+  .wild-alert{
+    position:absolute;z-index:9;pointer-events:none;
+    font-family:var(--pixel);font-size:28px;color:var(--g0);
+    opacity:0;transform:scale(.5);
+    transition:opacity .15s,transform .15s;
+    left:20px;bottom:160px;
+  }
+  .wild-alert.show{opacity:1;transform:scale(1);}
+  .wild-pokemon.flying .wild-alert{bottom:230px;}
+  .wild-pokemon.high .wild-alert{bottom:290px;}
+
+  /* ===== Grass clusters (big pixel blocks) ===== */
+  .grass-cluster{
+    position:absolute;bottom:0;z-index:5;pointer-events:none;
+    width:18px;height:18px;image-rendering:pixelated;
+    background:repeating-conic-gradient(var(--g1) 0 25%,var(--g2) 0 50%,var(--g0) 0 75%,var(--g1) 0) 0 0/6px 6px;
+  }
+  .grass-cluster.g1{left:6%;transform:scale(2.8);}
+  .grass-cluster.g2{left:26%;transform:scale(3.2);}
+  .grass-cluster.g3{left:58%;transform:scale(2.6);}
+  .grass-cluster.g4{left:76%;transform:scale(3.0);}
+  @keyframes grassShake{
+    0%,100%{transform:scale(var(--gs)) translateX(0);}
+    25%{transform:scale(var(--gs)) translateX(3px);}
+    75%{transform:scale(var(--gs)) translateX(-3px);}
+  }
+  .grass-cluster.shake{animation:grassShake .35s ease-in-out 3;}
+
+  /* ===== Pixel grass patches ===== */
+</style>
+</head>
+<body>
+
+<!-- ==================== CRT SCANLINES ==================== -->
+<div id="scanlines-overlay"></div>
+
+<!-- ==================== LOADING ==================== -->
+<div id="loader">
+  <div class="pokeball-loader" id="loaderBall">
+    <svg viewBox="0 0 60 60">
+      <circle cx="30" cy="30" r="28" fill="white" stroke="#9bbc0f" stroke-width="3"/>
+      <rect x="2" y="27" width="56" height="6" fill="#9bbc0f"/>
+      <line x1="2" y1="30" x2="58" y2="30" stroke="#306230" stroke-width="2"/>
+      <circle cx="30" cy="30" r="5" fill="white" stroke="#306230" stroke-width="2"/>
+      <circle cx="30" cy="30" r="2" fill="#306230"/>
+    </svg>
+  </div>
+  <div class="loader-text" id="loaderText">正在加载冠军数据...</div>
+  <div class="press-start" id="pressStart">PRESS START</div>
+  <div class="press-hint" id="pressHint">点击屏幕或按 Enter 键开始</div>
+</div>
+
+<!-- ==================== PROF OAK DIALOG ==================== -->
+<div id="oak-dialog">
+  <div class="oak-box">
+    <div class="oak-skip" onclick="dismissOak()">跳过 ></div>
+    <div class="oak-icon" style="margin-bottom:12px;">
+      <img src="https://play.pokemonshowdown.com/sprites/trainers/oak.png" style="width:80px;height:80px;image-rendering:pixelated;" alt="大木博士">
+    </div>
+    <div class="oak-title">大木博士</div>
+    <div class="oak-msg" id="oak-msg-0">你好！欢迎来到宝可梦的世界！</div>
+    <div class="oak-msg" id="oak-msg-1" style="display:none;">我是大木博士。你现在看到的，是关都联盟初代冠军的纪念馆。</div>
+    <div class="oak-msg" id="oak-msg-2" style="display:none;">接下来，让我带你重温他当年的传奇冒险吧。</div>
+    <div class="oak-btn" id="oak-next" onclick="nextOakMsg()">继续</div>
+  </div>
+</div>
+
+<!-- ==================== POKE TIP ==================== -->
+<div class="badge-popup" id="pokeTipPopup" style="border-color:var(--ink);box-shadow:6px 6px 0 var(--g1);pointer-events:auto;">
+  <div id="pokeTipText" style="font-family:var(--pixel);font-size:14px;color:var(--g0);padding:12px 20px;"></div>
+</div>
+
+<!-- ==================== STATUS BAR ==================== -->
+<div id="status-bar">
+  <div class="status-left">
+    <div class="status-avatar">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="pokeball">
+    </div>
+    <span id="trainer-name">GREEN</span>
+  </div>
+  <div class="status-location">
+    <span id="location-name">真新镇</span>
+    <span class="arrow">▶</span>
+  </div>
+  <div>
+    <span class="badge-slot" id="badge0"><img src="https://s1.52poke.com/wiki/thumb/2/2a/%E7%BB%BF%E8%89%B2_Badge.png/36px-%E7%BB%BF%E8%89%B2_Badge.png"></span>
+    <span class="badge-slot" id="badge1"><img src="https://s1.52poke.com/wiki/thumb/a/af/%E7%B2%89%E7%BA%A2_Badge.png/36px-%E7%B2%89%E7%BA%A2_Badge.png"></span>
+    <span class="badge-slot" id="badge2"><img src="https://s1.52poke.com/wiki/thumb/2/28/%E6%A9%99%E8%89%B2_Badge.png/36px-%E6%A9%99%E8%89%B2_Badge.png"></span>
+    <span class="badge-slot" id="badge3"><img src="https://s1.52poke.com/wiki/thumb/c/ca/%E7%81%B0%E8%89%B2_Badge.png/36px-%E7%81%B0%E8%89%B2_Badge.png"></span>
+    <span class="badge-slot" id="badge4"><img src="https://s1.52poke.com/wiki/thumb/0/0f/%E8%93%9D%E8%89%B2_Badge.png/36px-%E8%93%9D%E8%89%B2_Badge.png"></span>
+    <span class="badge-slot" id="badge5"><img src="https://s1.52poke.com/wiki/thumb/5/5a/%E9%87%91%E8%89%B2_Badge.png/36px-%E9%87%91%E8%89%B2_Badge.png"></span>
+    <span class="badge-slot" id="badge6"><img src="https://s1.52poke.com/wiki/thumb/5/56/%E5%BD%A9%E8%99%B9_Badge.png/36px-%E5%BD%A9%E8%99%B9_Badge.png"></span>
+    <span class="badge-slot" id="badge7"><img src="https://s1.52poke.com/wiki/thumb/b/b4/%E6%B7%B1%E7%BA%A2_Badge.png/36px-%E6%B7%B1%E7%BA%A2_Badge.png"></span>
+  </div>
+</div>
+
+<!-- ==================== BADGE TOAST ==================== -->
+<div class="badge-toast" id="badgeToast">
+  <img class="toast-badge" id="toastBadgeImg" src="" style="width:32px;height:32px;image-rendering:pixelated;">
+  <div class="toast-text">
+    <span id="toastLabel">获得徽章！</span>
+    <div class="got"><span id="toastName"></span></div>
+  </div>
+  <div class="toast-line"></div>
+</div>
+
+<!-- ==================== MAIN SCROLL ==================== -->
+<div id="main-scroll">
+
+  <!-- ========== PANEL 1: 真新镇 ========== -->
+  <section class="panel panel-1" data-panel="0">
+    <!-- Animated background -->
+    <div class="pallet-sky">
+      <div class="pallet-cloud c1"></div>
+      <div class="pallet-cloud c2"></div>
+      <div class="pallet-cloud c3"></div>
+    </div>
+    <div class="static-poke" style="--px:2%;--py:3%;--ps:150px;cursor:pointer;" onclick="showPokeTip('小拉达')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/19.png"></div></div>
+    <div class="static-poke p2" style="--px:90%;--py:3%;--ps:140px;cursor:pointer;" onclick="showPokeTip('皮卡丘')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/25.png"></div></div>
+    <div class="static-poke p3" style="--px:2%;--py:68%;--ps:130px;cursor:pointer;" onclick="showPokeTip('胖丁')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/39.png"></div></div>
+    <div class="static-poke p4" style="--px:90%;--py:68%;--ps:140px;cursor:pointer;" onclick="showPokeTip('波波')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/16.png"></div></div>
+
+    <div style="margin-top:40px;"></div>
+
+    <div class="pixel-card" style="max-width:840px;padding:28px 45px;">
+      <h2>— 训练师档案 —</h2>
+      <div class="trainer-card">
+        <div class="trainer-avatar-large">
+          <img src="avatar.jpg" alt="Trainer" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated;">
+        </div>
+        <div class="trainer-info">
+          <div class="label">训练师:</div>
+          <div class="value name">GREEN · 艾尔维亚绿番茄</div>
+          <div class="label">ID:</div>
+          <div class="value">No.523031910722</div>
+          <div class="label">图鉴:</div>
+          <div class="value">已完成 ████████░░ 80%</div>
+        </div>
+      </div>
+      <p class="bio-text" style="margin-top:18px;">
+        这里是一位在代码世界冒险的训练师。<br>
+        热爱数据、擅长前端开发、偶尔画画。<br>
+        正在不断收集新的技能徽章，<br>
+        目标是成为全栈冠军。
+      </p>
+    </div>
+    <button onclick="scrollToSection('oak-lab')" style="display:inline-block;margin-top:20px;padding:10px 28px;background:var(--g2);color:var(--g0);border:none;font-family:var(--pixel);font-size:11px;letter-spacing:2px;cursor:pointer;box-shadow:3px 3px 0 var(--g1);">
+      开始参观 →
+    </button>
+    <div class="scroll-indicator" onclick="flipNext()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll">
+      <span>向下翻页</span>
+    </div>
+  </section>
+
+  <!-- ========== PANEL 2: 研究所 ========== -->
+  <section class="panel panel-2" data-panel="1">
+    <div class="static-poke p2" style="--px:90%;--py:3%;--ps:140px;cursor:pointer;" onclick="showPokeTip('绿毛虫')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/10.png"></div></div>
+    <div class="static-poke" style="--px:2%;--py:3%;--ps:130px;cursor:pointer;" onclick="showPokeTip('蚊香蝌蚪')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/60.png"></div></div>
+    <div class="static-poke p3" style="--px:90%;--py:66%;--ps:120px;cursor:pointer;" onclick="showPokeTip('波波')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/16.png"></div></div>
+    <div class="static-poke p4" style="--px:2%;--py:66%;--ps:130px;cursor:pointer;" onclick="showPokeTip('巴大蝶')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/12.png"></div></div>
+    <div class="pixel-card">
+      <h2>— 艾尔维亚绿番茄能力分析 —</h2>
+      <div class="lab-layout">
+        <canvas id="radar-canvas" width="280" height="280"></canvas>
+        <div class="snorlax-box">
+          <img src="https://cdn.jsdelivr.net/gh/msikma/pokesprite@master/pokemon-gen8/regular/snorlax.png" alt="Snorlax">
+          <div class="partner-label">初始伙伴 · 卡比兽</div>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-indicator" onclick="flipNext()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll">
+      <span>向下翻页</span>
+    </div>
+  </section>
+
+  <!-- ========== PANEL 3: 常磐森林 ========== -->
+  <section class="panel panel-1" data-panel="2">
+    <div class="static-poke" style="--px:2%;--py:3%;--ps:150px;cursor:pointer;" onclick="showPokeTip('独角虫')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/13.png"></div></div>
+    <div class="static-poke p3" style="--px:2%;--py:66%;--ps:130px;cursor:pointer;" onclick="showPokeTip('铁甲蛹')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/11.png"></div></div>
+    <div class="static-poke p2" style="--px:90%;--py:66%;--ps:120px;cursor:pointer;" onclick="showPokeTip('皮皮')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/35.png"></div></div>
+    <div class="static-poke p4" style="--px:90%;--py:3%;--ps:140px;cursor:pointer;" onclick="showPokeTip('蛋蛋')"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/102.png"></div></div>
+    <div class="pixel-card">
+      <h2>— 常磐森林 · 技能树 —</h2>
+      <div style="text-align:center;">
+        <svg viewBox="0 0 320 200" style="width:320px;height:200px;image-rendering:pixelated;">
+          <rect x="156" y="100" width="8" height="70" fill="#8B4513"/>
+          <line x1="160" y1="110" x2="120" y2="70" stroke="#8B4513" stroke-width="5"/>
+          <line x1="160" y1="110" x2="200" y2="70" stroke="#8B4513" stroke-width="5"/>
+          <line x1="160" y1="120" x2="115" y2="48" stroke="#8B4513" stroke-width="4"/>
+          <line x1="160" y1="120" x2="205" y2="48" stroke="#8B4513" stroke-width="4"/>
+          <circle cx="160" cy="28" r="28" fill="#306230"/>
+          <circle cx="115" cy="48" r="18" fill="#8bac0f"/>
+          <circle cx="205" cy="48" r="18" fill="#8bac0f"/>
+          <circle cx="118" cy="72" r="15" fill="#9bbc0f"/>
+          <circle cx="202" cy="72" r="15" fill="#9bbc0f"/>
+          <circle cx="145" cy="45" r="14" fill="#306230"/>
+          <circle cx="175" cy="45" r="14" fill="#8bac0f"/>
+          <circle cx="130" cy="58" r="11" fill="#9bbc0f"/>
+          <circle cx="190" cy="58" r="11" fill="#9bbc0f"/>
+        </svg>
+        <div style="display:flex;justify-content:center;gap:6px;margin-top:6px;">
+          <span class="skill-tag" style="border-color:var(--g0);">HTML</span>
+          <span class="skill-tag" style="border-color:var(--g0);">CSS</span>
+          <span class="skill-tag" style="border-color:var(--g0);">JS</span>
+        </div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:4px;">
+          <span class="skill-tag">React</span>
+          <span class="skill-tag">Vue</span>
+          <span class="skill-tag">Node.js</span>
+          <span class="skill-tag">Python</span>
+        </div>
+        <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:5px;margin-top:4px;">
+          <span class="skill-tag" style="font-size:12px;padding:4px 10px;">Git</span>
+          <span class="skill-tag" style="font-size:12px;padding:4px 10px;">Figma</span>
+          <span class="skill-tag" style="font-size:12px;padding:4px 10px;">SQL</span>
+          <span class="skill-tag" style="font-size:12px;padding:4px 10px;">Docker</span>
+        </div>
+      </div>
+      <!-- Tool bar -->
+      <p style="font-family:var(--pixel);font-size:14px;color:var(--g1);text-align:center;margin-top:16px;letter-spacing:2px;">冠军的道具</p>
+      <div style="display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:6px;">
+        <div class="tool-item" style="display:flex;align-items:center;gap:6px;"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" style="width:24px;height:24px;image-rendering:pixelated;"><span>VS Code</span></div>
+        <div class="tool-item" style="display:flex;align-items:center;gap:6px;"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/great-ball.png" style="width:24px;height:24px;image-rendering:pixelated;"><span>Figma</span></div>
+        <div class="tool-item" style="display:flex;align-items:center;gap:6px;"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/ultra-ball.png" style="width:24px;height:24px;image-rendering:pixelated;"><span>GitHub</span></div>
+        <div class="tool-item" style="display:flex;align-items:center;gap:6px;"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/master-ball.png" style="width:24px;height:24px;image-rendering:pixelated;"><span>Docker</span></div>
+      </div>
+    </div>
+    <div class="scroll-indicator" onclick="flipNext()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll">
+      <span>向下翻页</span>
+    </div>
+  </section>
+
+  <!-- ========== PANEL 4: 尼比市道馆 ========== -->
+  <section class="panel gym-panel" data-panel="3">
+    <div class="static-poke" style="--px:2%;--py:3%;--ps:120px;"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/74.png"></div></div>
+    <div class="static-poke p2" style="--px:90%;--py:3%;--ps:110px;"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/95.png"></div></div>
+
+    <div class="gym-layout">
+      <div class="gym-leader"><img src="https://play.pokemonshowdown.com/sprites/trainers/brock.png" style="width:96px;height:96px;"><span>小刚</span></div>
+      <div class="gym-title" style="background:linear-gradient(180deg,#e0c890,#c8a870);border:3px solid var(--ink);padding:8px 24px;box-shadow:3px 3px 0 var(--g1);">尼比市道馆</div>
+    </div>
+
+    <!-- 主卡牌 (holo) -->
+    <div class="project-card gym-main" onmousemove="holoTilt(event,this)" onmouseleave="resetTilt(this)" onclick="flipCard(this)" style="max-width:840px;width:100%;height:180px;">
+      <div class="holo-card">
+        <div class="holo-shine"></div>
+        <div class="holo-content" style="flex-direction:row;gap:24px;text-align:left;padding:20px 28px;">
+          <div style="flex-shrink:0;"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/75.png" style="width:72px;height:72px;image-rendering:pixelated;"></div>
+          <div style="flex:1;">
+            <h3 style="font-size:16px;line-height:1.6;">视觉引导机械臂 <br>骰子识别与垒放系统 <span style="color:var(--gold);">Lv.82</span></h3>
+            <p class="proj-desc" style="font-size:12px;">视觉伺服PID控制 · 手眼标定 · 全自动状态机闭环 · 整套硬件落地</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5张细分 (holo mini with hover tooltip) -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;max-width:840px;width:100%;margin-bottom:10px;">
+      <div class="project-card gym-sub" onmousemove="holoTilt(event,this)" onmouseleave="resetTilt(this)" data-tip="OpenCV图像处理、骰子点数识别、光照补偿算法" style="height:100px;">
+        <div class="holo-card"><div class="holo-shine"></div><div class="holo-content" style="padding:0;justify-content:center;">
+          <h3 style="font-size:11px;text-align:center;">视觉识别</h3>
+        </div></div>
+      </div>
+      <div class="project-card gym-sub" onmousemove="holoTilt(event,this)" onmouseleave="resetTilt(this)" data-tip="手眼标定、三维坐标变换、机械臂运动学逆解" style="height:100px;">
+        <div class="holo-card"><div class="holo-shine"></div><div class="holo-content" style="padding:0;justify-content:center;">
+          <h3 style="font-size:11px;">坐标解算</h3>
+        </div></div>
+      </div>
+      <div class="project-card gym-sub" onmousemove="holoTilt(event,this)" onmouseleave="resetTilt(this)" data-tip="PID视觉伺服、实时误差修正、轨迹规划" style="height:100px;">
+        <div class="holo-card"><div class="holo-shine"></div><div class="holo-content" style="padding:0;justify-content:center;">
+          <h3 style="font-size:11px;">闭环控制</h3>
+        </div></div>
+      </div>
+      <div class="project-card gym-sub" onmousemove="holoTilt(event,this)" onmouseleave="resetTilt(this)" data-tip="工作空间约束、障碍物检测、安全停机策略" style="height:100px;">
+        <div class="holo-card"><div class="holo-shine"></div><div class="holo-content" style="padding:0;justify-content:center;">
+          <h3 style="font-size:11px;">防碰撞逻辑</h3>
+        </div></div>
+      </div>
+      <div class="project-card gym-sub" onmousemove="holoTilt(event,this)" onmouseleave="resetTilt(this)" data-tip="Qt界面、串口通信、状态监控与日志系统" style="height:100px;">
+        <div class="holo-card"><div class="holo-shine"></div><div class="holo-content" style="padding:0;justify-content:center;">
+          <h3 style="font-size:11px;">上位机开发</h3>
+        </div></div>
+      </div>
+    </div>
+
+    <script>
+    // Gym sub-card hover tooltips
+    (function(){
+      var gymSubs = document.querySelectorAll('.gym-sub');
+      gymSubs.forEach(function(card){
+        var tip = document.createElement('div');
+        tip.className = 'flip-tooltip';
+        tip.style.cssText = 'position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:var(--g0);color:var(--g3);padding:8px 12px;font-family:var(--pixel);font-size:9px;line-height:1.8;border:2px solid var(--g2);box-shadow:3px 3px 0 var(--g1);white-space:normal;width:200px;text-align:center;pointer-events:none;opacity:0;transition:opacity .25s;z-index:20;letter-spacing:.5px;';
+        tip.textContent = card.getAttribute('data-tip')||'';
+        card.style.position = 'relative';
+        card.appendChild(tip);
+        card.addEventListener('mouseenter', function(){ tip.style.opacity = '1'; });
+        card.addEventListener('mouseleave', function(){ tip.style.opacity = '0'; });
+      });
+    })();
+    </script>
+    
+
+    <!-- HP条 -->
+    <div class="gym-hp-bar">
+      <div class="hp-label">硬件实战能力完成度 6/6 ████████████</div>
+      <div class="hp-track"><div class="hp-fill"></div></div>
+    </div>
+    <p style="font-family:var(--pixel);font-size:10px;color:var(--g1);margin-top:8px;letter-spacing:1px;">冠军在这里战斗了3次，最终获得了胜利。</p>
+
+    <div class="scroll-indicator" onclick="flipNext()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll"><span>向下翻页</span>
+    </div>
+  </section>
+
+  <!-- ========== PANEL 5: 华蓝市道馆 ========== -->
+  <section class="panel water-panel" data-panel="4">
+    <div class="water-ripple r1"></div><div class="water-ripple r2"></div><div class="water-ripple r3"></div>
+    <div class="static-poke" style="--px:2%;--py:3%;--ps:110px;"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/121.png"></div></div>
+    <div class="static-poke p2" style="--px:90%;--py:3%;--ps:100px;"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/54.png"></div></div>
+
+    <div class="gym-layout">
+      <div class="gym-leader"><img src="https://play.pokemonshowdown.com/sprites/trainers/misty.png" style="width:96px;height:96px;"><span>小霞</span></div>
+      <div class="gym-title" style="background:linear-gradient(180deg,#a8d8f0,#6898b8);border:3px solid var(--ink);padding:8px 24px;box-shadow:3px 3px 0 var(--g1);color:#0a3050;">华蓝市道馆</div>
+    </div>
+
+    <div class="water-boards">
+      <div class="water-main">
+        <div class="new-badge">NEW</div>
+        <h3>受限空间无人机局部避障优化</h3>
+        <p class="water-desc">最新在研策略迭代项目，解决窄缝穿越弹回问题，适配船舶内部复杂受限空间环境。动态局部避障逻辑设计，结合多传感器融合反馈实现实时路径修正。</p>
+      </div>
+      <div class="water-grid">
+        <div class="water-card"><h4>全局路径规划</h4><p>SUPER算法全局轨迹生成+TSP旅行商多航点全自动巡航调度</p></div>
+        <div class="water-card"><h4>仿真环境搭建</h4><p>Gazebo高保真场景复刻，雷达噪声+动力学误差双维度建模</p></div>
+        <div class="water-card"><h4>多源感知融合</h4><p>雷达与视觉时空对齐，点云切割+语义融合，厘米级位姿估计</p></div>
+        <div class="water-card"><h4>局部避障策略</h4><p>动态局部避障逻辑，解决窄缝弹回问题，适配受限空间</p></div>
+      </div>
+    </div>
+
+    <p style="font-family:var(--pixel);font-size:10px;color:#4488aa;margin-top:8px;letter-spacing:1px;">水流代表不断迭代优化的算法策略</p>
+
+    <div class="scroll-indicator" onclick="flipNext()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll"><span>向下翻页</span>
+    </div>
+  </section>
+
+  <!-- ========== PANEL 6: 枯叶市道馆 ========== -->
+  <section class="panel elec-panel" data-panel="5" id="vermillion-gym">
+    <!-- Electric sparks container -->
+    <div id="spark-container" style="position:absolute;inset:0;pointer-events:none;z-index:3;"></div>
+    <!-- Central wire -->
+    <div class="elec-wire" id="elecWire"></div>
+    <div class="static-poke" style="--px:90%;--py:3%;--ps:90px;"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/26.png"></div></div>
+    <div class="static-poke p2" style="--px:2%;--py:3%;--ps:80px;"><div class="poke-idle"><img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/125.png"></div></div>
+
+    <div class="gym-layout" style="margin-bottom:6px;">
+      <div class="gym-leader"><img src="https://play.pokemonshowdown.com/sprites/trainers/ltsurge-gen1.png" style="width:96px;height:96px;image-rendering:pixelated;"><span style="color:#ffcc00;">马志士</span></div>
+      <div class="gym-title" style="background:linear-gradient(180deg,#ffcc00,#cc8800);border:3px solid var(--ink);padding:8px 24px;box-shadow:3px 3px 0 #664400;color:#1a1030;">枯叶市道馆<span style="display:block;font-family:var(--pixel);font-size:8px;color:#402000;margin-top:2px;letter-spacing:1px;">电光织链，以算力驱动智能思考</span></div>
+    </div>
+
+    <!-- Timeline nodes -->
+    <div style="position:relative;z-index:2;max-width:640px;width:100%;padding:0 16px;">
+      <div class="elec-node left"><div class="elec-bulb" id="bulb0"></div><div><h4>节点1｜基础推理底座搭建</h4><p>完成大模型基础环境部署，搭建原生LLM推理基座，完成基础文本理解、逻辑问答能力调试，奠定整个智能体系统的底层算力基础。</p></div></div>
+      <div class="elec-node right"><div class="elec-bulb" id="bulb1"></div><div><h4>节点2｜单智能体ReAct闭环搭建</h4><p>引入ReAct推理框架，拆分思考模块与行动模块，实现大模型自主思考、自主调用外部工具，完成单智能体思考-行动-反馈完整闭环。</p></div></div>
+      <div class="elec-node left"><div class="elec-bulb" id="bulb2"></div><div><h4>节点3｜RAG检索增强优化</h4><p>接入本地知识库，搭建向量检索数据库，解决大模型幻觉问题，补充专业领域静态知识，提升智能体任务执行准确率与回答专业性。</p></div></div>
+      <div class="elec-node right"><div class="elec-bulb" id="bulb3"></div><div><h4>节点4｜多智能体协同调度</h4><p>拆分对话智能体、检索智能体双异构模块，设计任务分发机制与模块通信协议，实现多角色分工协作，适配复杂复合型任务。</p></div></div>
+      <div class="elec-node left"><div class="elec-bulb" id="bulb4"></div><div><h4>节点5｜系统调试与成果落地</h4><p>完成全链路联调、异常报错修复、参数调优，完成整套系统工程化封装，同步申请软件著作权，实现项目完整落地闭环。</p></div></div>
+    </div>
+
+    <p class="elec-footer">攻破算力难题，完成从人工调参到AI自主决策的跨越</p>
+
+    <div class="scroll-indicator" onclick="flipNext()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll"><span>向下翻页</span>
+    </div>
+  </section>
+
+  <!-- ========== PANEL 7: 宝可梦中心 ========== -->
+  <section class="panel panel-1" data-panel="6">
+    <div class="gym-layout">
+      <div class="gym-leader"><img src="https://play.pokemonshowdown.com/sprites/trainers/nurse.png" style="width:80px;height:80px;"><span>乔伊</span></div>
+      <div class="gym-title" style="background:linear-gradient(180deg,#ffd0d8,#ee8899);border:3px solid var(--ink);padding:8px 24px;box-shadow:3px 3px 0 #aa5566;color:#3a1010;">宝可梦中心</div>
+    </div>
+    <div class="pixel-card" style="max-width:560px;">
+      <h2>— 联系方式 —</h2>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <div class="contact-item" style="flex:1;">
+          <div class="contact-icon">📧</div>
+          <h3>邮箱</h3>
+          <p>2238838576@sjtu.edu.cn</p>
+        </div>
+        <div class="contact-item" style="flex:1;">
+          <div class="contact-icon">💬</div>
+          <h3>微信</h3>
+          <p>13766259235</p>
+        </div>
+      </div>
+      <div class="message-board">
+        <h3>留言板</h3>
+        <div class="message-list">
+          <p>游客1：很棒的网站！</p>
+          <p>游客2：加油！期待更多作品</p>
+          <p>游客3：设计太酷了！</p>
+        </div>
+        <div class="message-input-wrap">
+          <input type="text" placeholder="留下你的留言...">
+          <button>发送</button>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-indicator" onclick="flipNext()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll">
+      <span>前往终点</span>
+    </div>
+  </section>
+
+  <!-- ========== PANEL 8: 冠军终点 ========== -->
+  <section class="panel panel-3" data-panel="7">
+
+    <!-- Ending message -->
+    <div style="margin-top:20px;text-align:center;">
+      <p style="font-family:var(--pixel);font-size:18px;color:var(--g1);line-height:2.2;letter-spacing:1px;">
+        感谢你参观冠军的冒险纪念馆！<br>
+        希望这段旅程能给你带来启发和力量。
+      </p>
+      <button onclick="scrollToTop()" style="margin-top:16px;padding:10px 28px;background:var(--g2);color:var(--g0);border:none;font-family:var(--pixel);font-size:10px;letter-spacing:2px;cursor:pointer;box-shadow:3px 3px 0 var(--g1);">
+        回到真新镇
+      </button>
+    </div>
+
+    <div class="scroll-indicator" onclick="flipPrev()">
+      <img src="https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/items/poke-ball.png" alt="scroll" style="transform:rotate(180deg);">
+      <span>回到顶部</span>
+    </div>
+  </section>
+
+</div>
+
+<!-- ==================== XP PROGRESS BAR ==================== -->
+<div id="xp-bar-wrap">
+  <div id="xp-bar-fill" style="width:0%;"></div>
+  <div id="xp-bar-label">LV.1</div>
+</div>
+
+<script>
+// ============================================================
+//  LOADING SCREEN
+// ============================================================
+(function(){
+  var loader = document.getElementById('loader');
+  var ball = document.getElementById('loaderBall');
+  var pressStart = document.getElementById('pressStart');
+  var pressHint = document.getElementById('pressHint');
+  var loaderText = document.getElementById('loaderText');
+  var ready = false;
+
+  // After 1.5s, stop bouncing, show PRESS START
+  setTimeout(function(){
+    ball.classList.add('stopped');
+    loaderText.textContent = '冠军数据加载完成';
+    pressStart.classList.add('show');
+    pressHint.classList.add('show');
+    ready = true;
+  }, 1500);
+
+  function dismissLoader(){
+    if(!ready) return;
+    loader.classList.add('hide');
+    setTimeout(function(){ loader.style.display='none'; }, 700);
+  }
+
+  document.addEventListener('click', dismissLoader);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') dismissLoader();
+  });
+})();
+
+// ============================================================
+//  RADAR CHART (Panel 2)
+// ============================================================
+(function drawRadar(){
+  const canvas = document.getElementById('radar-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx=140,cy=140,r=105;
+  const labels=['熬夜能力','Bug嗅觉','咖啡抗性','CtrlCV','肝度','摸鱼力'];
+  const values=[95,65,60,90,65,88];
+  const n=6;
+
+  // Background grid
+  for(let level=1;level<=4;level++){
+    ctx.beginPath();
+    for(let i=0;i<=n;i++){
+      const ang=Math.PI/2 - (i/n)*Math.PI*2;
+      const x=cx + Math.cos(ang)*r*level/4;
+      const y=cy - Math.sin(ang)*r*level/4;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle='#8bac0f';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+  }
+
+  // Axis lines
+  for(let i=0;i<n;i++){
+    const ang=Math.PI/2 - (i/n)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(ang)*r, cy-Math.sin(ang)*r);
+    ctx.strokeStyle='#8bac0f';
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+  }
+
+  // Data area
+  ctx.beginPath();
+  for(let i=0;i<=n;i++){
+    const ang=Math.PI/2 - (i/n)*Math.PI*2;
+    const val=values[i%values.length]/100;
+    const x=cx + Math.cos(ang)*r*val;
+    const y=cy - Math.sin(ang)*r*val;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(48,98,48,0.35)';
+  ctx.fill();
+  ctx.strokeStyle='#0f380f';
+  ctx.lineWidth=2.5;
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle='#0f380f';
+  ctx.font='10px "Press Start 2P", "SimHei", monospace';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  for(let i=0;i<n;i++){
+    const ang=Math.PI/2 - (i/n)*Math.PI*2;
+    const lx=cx + Math.cos(ang)*(r+22);
+    const ly=cy - Math.sin(ang)*(r+22);
+    ctx.fillText(labels[i], lx, ly);
+  }
+
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(cx,cy,3,0,Math.PI*2);
+  ctx.fillStyle='#0f380f';
+  ctx.fill();
+})();
+
+// ============================================================
+//  SCROLL-DRIVEN BADGE UNLOCK
+// ============================================================
+(function badgeSystem(){
+  var badgeNames  = ['起点徽章','能力徽章','森林徽章','岩石徽章','水流徽章','冠军徽章','友谊徽章','传说徽章'];
+  var badgeEmoji  = ['★','◆','♥','●','▲','♦','⬟','⬢'];
+  var badgeDescs  = ['真新镇 · 梦想的起点','研究所 · 实力的证明','常磐森林 · 成长的磨练','尼比道馆 · 钢铁试炼','华蓝道馆 · 策略博弈','冠军殿堂 · 荣耀的战绩','宝可梦中心 · 友谊的羁绊','终点 · 不朽的传奇'];
+  var unlocked = [false,false,false,false,false,false,false,false];
+  var lastPopup = 0;
+
+  function unlockBadge(idx){
+    if(unlocked[idx]) return;
+    unlocked[idx]=true;
+    var el = document.getElementById('badge'+idx);
+    // Badge colors (game-style: Boulder, Cascade, Thunder, Rainbow, Soul, Marsh)
+    var badgeColors = ['#999','#4499dd','#ee8833','#cc66cc','#ee6699','#ddaa33'];
+    var badgeShapes = ['⬡','💧','⚡','✿','♥','✦'];
+    if(el){ 
+      el.classList.add('unlocked'); 
+    }
+
+    // Toast notification (game-style slide-in from right)
+    var toast = document.getElementById('badgeToast');
+    var toastImg = document.getElementById('toastBadgeImg');
+    var badgeUrls = [
+      'https://s1.52poke.com/wiki/thumb/2/2a/%E7%BB%BF%E8%89%B2_Badge.png/48px-%E7%BB%BF%E8%89%B2_Badge.png',
+      'https://s1.52poke.com/wiki/thumb/0/0f/%E8%93%9D%E8%89%B2_Badge.png/48px-%E8%93%9D%E8%89%B2_Badge.png',
+      'https://s1.52poke.com/wiki/thumb/2/28/%E6%A9%99%E8%89%B2_Badge.png/48px-%E6%A9%99%E8%89%B2_Badge.png',
+      'https://s1.52poke.com/wiki/thumb/c/ca/%E7%81%B0%E8%89%B2_Badge.png/48px-%E7%81%B0%E8%89%B2_Badge.png',
+      'https://s1.52poke.com/wiki/thumb/b/b4/%E6%B7%B1%E7%BA%A2_Badge.png/48px-%E6%B7%B1%E7%BA%A2_Badge.png',
+      'https://s1.52poke.com/wiki/thumb/5/56/%E5%BD%A9%E8%99%B9_Badge.png/48px-%E5%BD%A9%E8%99%B9_Badge.png',
+      'https://s1.52poke.com/wiki/thumb/a/af/%E7%B2%89%E7%BA%A2_Badge.png/48px-%E7%B2%89%E7%BA%A2_Badge.png',
+      'https://s1.52poke.com/wiki/thumb/5/5a/%E9%87%91%E8%89%B2_Badge.png/48px-%E9%87%91%E8%89%B2_Badge.png'
+    ];
+    toastImg.src = badgeUrls[idx];
+    document.getElementById('toastName').textContent = badgeNames[idx];
+    document.getElementById('toastLabel').textContent = '获得徽章！';
+    toast.classList.add('show');
+    
+    // Reset line animation
+    var line = toast.querySelector('.toast-line');
+    line.style.animation = 'none';
+    void line.offsetWidth;
+    line.style.animation = 'toastTimer 2.5s linear forwards';
+    
+    setTimeout(function(){ toast.classList.remove('show'); }, 2500);
+
+    // Update XP bar
+    var unlockedCount = unlocked.filter(function(v){return v;}).length;
+    var xpPct = (unlockedCount / 8) * 100;
+    document.getElementById('xp-bar-fill').style.width = xpPct + '%';
+    var levels = ['LV.1','LV.6','LV.12','LV.20','LV.28','LV.38','LV.46','LV.55','LV.MAX'];
+    document.getElementById('xp-bar-label').textContent = levels[unlockedCount]||'LV.MAX';
+
+    // Check all completed
+    if(unlocked.every(function(v){return v;})){
+      setTimeout(function(){
+        document.getElementById('status-bar').classList.add('gold');
+      }, 2300);
+    }
+  }
+
+  // Intersection Observer
+  var panels = document.querySelectorAll('.panel');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var idx = parseInt(entry.target.getAttribute('data-panel'));
+        unlockBadge(idx);
+        // Update location
+        var locs = ['真新镇','大木博士研究所','常磐森林','尼比市道馆','华蓝市道馆','冠军殿堂','宝可梦中心','冠军终点'];
+        document.getElementById('location-name').textContent = locs[idx]||'';
+      }
+    });
+  }, {threshold:0.4});
+
+  panels.forEach(function(p){ observer.observe(p); });
+})();
+
+// ============================================================
+//  OAK DIALOG
+// ============================================================
+var oakMsgIdx = 0;
+function nextOakMsg(){
+  oakMsgIdx++;
+  if(oakMsgIdx >= 3){
+    dismissOak();
+    return;
+  }
+  for(var i=0;i<3;i++){
+    document.getElementById('oak-msg-'+i).style.display = (i===oakMsgIdx)?'block':'none';
+  }
+  if(oakMsgIdx===2) document.getElementById('oak-next').textContent = '开始参观';
+}
+function dismissOak(){
+  document.getElementById('oak-dialog').classList.add('hide');
+}
+
+// Panel 1 house removed, keep scrollToSection for button
+function scrollToSection(id){
+  var el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth'});
+}
+
+// ============================================================
+//  PAGE FLIP SCROLLING
+// ============================================================
+(function pageFlip(){
+  var panels = document.querySelectorAll('.panel');
+  var total = panels.length;
+  var current = 0;
+  var flipping = false;
+  var cooldown = 600;
+  var sc = document.getElementById('main-scroll');
+
+  function flipTo(idx){
+    if(idx < 0 || idx >= total || flipping) return;
+    flipping = true;
+    current = idx;
+    // Use scrollTo with exact pixel target for smoothness
+    sc.scrollTo({top: idx * panels[0].offsetHeight, behavior:'smooth'});
+    setTimeout(function(){ flipping = false; }, cooldown);
+  }
+
+  document.addEventListener('wheel', function(e){
+    e.preventDefault();
+    if(e.deltaY > 20){ flipTo(current + 1); }
+    else if(e.deltaY < -20){ flipTo(current - 1); }
+  }, {passive:false});
+
+  var touchY = 0;
+  document.addEventListener('touchstart', function(e){ touchY = e.touches[0].clientY; }, {passive:true});
+  document.addEventListener('touchend', function(e){
+    var d = touchY - e.changedTouches[0].clientY;
+    if(Math.abs(d) > 50){ flipTo(d > 0 ? current + 1 : current - 1); }
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'ArrowDown' || e.key === 'PageDown'){ flipTo(current + 1); e.preventDefault(); }
+    if(e.key === 'ArrowUp' || e.key === 'PageUp'){ flipTo(current - 1); e.preventDefault(); }
+  });
+
+  sc.addEventListener('scroll', function(){
+    var i = Math.round(sc.scrollTop / panels[0].offsetHeight);
+    if(i >= 0 && i < total) current = i;
+  });
+})();
+
+function flipNext(){ 
+  var sc = document.getElementById('main-scroll');
+  var panels = document.querySelectorAll('.panel');
+  if(!panels.length) return;
+  var idx = Math.round(sc.scrollTop / panels[0].offsetHeight);
+  var target = Math.min(idx+1, panels.length-1);
+  sc.scrollTo({top: target * panels[0].offsetHeight, behavior:'smooth'});
+}
+function flipPrev(){ 
+  var sc = document.getElementById('main-scroll');
+  var panels = document.querySelectorAll('.panel');
+  if(!panels.length) return;
+  var idx = Math.round(sc.scrollTop / panels[0].offsetHeight);
+  var target = Math.max(idx-1, 0);
+  sc.scrollTo({top: target * panels[0].offsetHeight, behavior:'smooth'});
+}
+
+function scrollToTop(){
+  var sc = document.getElementById('main-scroll');
+  sc.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ============================================================
+//  ELECTRIC EFFECTS (Vermilion Gym)
+// ============================================================
+(function elecFX(){
+  // Bulb flicker
+  setInterval(function(){
+    for(var i=0;i<5;i++){
+      var b = document.getElementById('bulb'+i);
+      if(!b) continue;
+      if(Math.random()<0.3){
+        b.classList.add('dim');
+        setTimeout(function(){ b.classList.remove('dim'); }, 200+Math.random()*600);
+      }
+    }
+  }, 1500);
+
+  // Random sparks
+  var container = document.getElementById('spark-container');
+  if(!container) return;
+  setInterval(function(){
+    var s = document.createElement('div');
+    s.className = 'elec-spark';
+    s.style.left = (5+Math.random()*90)+'%';
+    s.style.top = (5+Math.random()*90)+'%';
+    container.appendChild(s);
+    setTimeout(function(){ s.remove(); }, 1200);
+  }, 800);
+
+  // Wire hover speed boost
+  var wire = document.getElementById('elecWire');
+  if(wire){
+    wire.addEventListener('mouseenter', function(){ wire.style.animationDuration='.3s'; });
+    wire.addEventListener('mouseleave', function(){ wire.style.animationDuration='.8s'; });
+  }
+})();
+
+// Wild Pokemon tooltip
+function showPokeTip(name){
+  var tip = document.getElementById('pokeTipPopup');
+  document.getElementById('pokeTipText').textContent = '冠军当年在这里收服了一只'+name+'。';
+  tip.classList.add('show');
+  setTimeout(function(){ tip.classList.remove('show'); }, 2000);
+}
+function hidePokeTip(){
+  document.getElementById('pokeTipPopup').classList.remove('show');
+}
+
+// ============================================================
+//  NARRATION SYSTEM
+// ============================================================
+(function narration(){
+  var lines = [
+    '冠军的故乡，一切冒险的起点。',
+    '就是在这里，冠军选择了他的初始伙伴。',
+    '常磐森林是冠军遇到的第一个挑战。在这里，他收服了许多宝可梦，也学会了如何成为一名真正的训练师。',
+    '这是冠军挑战的第一个道馆。在这里，他凭借自己的努力，获得了第一枚道馆徽章。',
+    '在华蓝市道馆，冠军的技术得到了极大的提升。他学会了如何运用策略战胜强大的对手。',
+    '这里是冠军展示荣耀的地方。',
+    '在宝可梦中心，训练师们交流与休整。',
+    '感谢你走完冠军的冒险之路。'
+  ];
+  var activeIdx = -1;
+  var toast = document.createElement('div');
+  toast.id = 'narration-toast';
+  toast.style.cssText = 'position:fixed;top:56px;left:50%;transform:translateX(-50%) translateY(-120px);z-index:150;background:rgba(15,56,15,.92);color:#9bbc0f;border:2px solid #8bac0f;padding:8px 28px;font-family:var(--pixel);font-size:18px;letter-spacing:2px;white-space:nowrap;transition:transform .4s ease;box-shadow:3px 3px 0 rgba(0,0,0,.5);border-radius:2px;max-width:90vw;overflow:hidden;text-overflow:ellipsis;';
+  toast.textContent = lines[0];
+  document.body.appendChild(toast);
+
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        var idx = parseInt(entry.target.getAttribute('data-panel'));
+        if(idx !== activeIdx && idx>=0 && idx<lines.length){
+          activeIdx = idx;
+          toast.textContent = lines[idx];
+          toast.style.transform = 'translateX(-50%) translateY(0)';
+          setTimeout(function(){ toast.style.transform = 'translateX(-50%) translateY(-120px)'; }, 2500);
+        }
+      }
+    });
+  }, {threshold:0.5});
+  document.querySelectorAll('.panel').forEach(function(p){ observer.observe(p); });
+})();
+
+// ============================================================
+//  WILD POKEMON RANDOM SPAWN
+// ============================================================
+(function wildSpawner(){
+  var allPokes = document.querySelectorAll('.wild-pokemon[id]');
+  allPokes.forEach(function(poke){ scheduleSpawn(poke); });
+
+  function scheduleSpawn(poke){
+    var delay = 3000 + Math.random() * 12000;
+    setTimeout(function(){ spawnPoke(poke); }, delay);
+  }
+  function spawnPoke(poke){
+    // Shake nearest grass
+    var panel = poke.closest('.panel');
+    if(panel){
+      var grasses = panel.querySelectorAll('.grass-cluster');
+      if(grasses.length){
+        var g = grasses[Math.floor(Math.random()*grasses.length)];
+        g.classList.add('shake');
+        setTimeout(function(){ g.classList.remove('shake'); }, 1200);
+      }
+    }
+    // Show alert "!"
+    var alert = poke.querySelector('.wild-alert');
+    if(alert){ alert.classList.add('show'); setTimeout(function(){ alert.classList.remove('show'); }, 500); }
+    setTimeout(function(){
+      poke.classList.add('run');
+      var dur = parseFloat(getComputedStyle(poke).getPropertyValue('--run-dur')) || 16;
+      setTimeout(function(){ poke.classList.remove('run'); poke.style.left='-200px'; scheduleSpawn(poke); }, dur*1000+500);
+    }, 500);
+  }
+})();
+
+function showHouseDialog(){
+  var d = document.getElementById('house-dialog');
+  d.classList.add('show');
+  setTimeout(function(){ d.classList.remove('show'); }, 2500);
+}
+
+// ============================================================
+//  HOLO CARD TILT + SHINE
+// ============================================================
+function holoTilt(e, card){
+  var rect = card.getBoundingClientRect();
+  var x = (e.clientX - rect.left) / rect.width;
+  var y = (e.clientY - rect.top) / rect.height;
+  var rx = (y - 0.5) * -25;
+  var ry = (x - 0.5) * 25;
+  card.style.transform = 'perspective(800px) rotateX('+rx+'deg) rotateY('+ry+'deg)';
+  // Update shine CSS vars
+  var shine = card.querySelector('.holo-shine');
+  if(shine){
+    shine.style.setProperty('--mx', (x*100)+'%');
+    shine.style.setProperty('--my', (y*100)+'%');
+    shine.style.setProperty('--hr', (ry*2)+'deg');
+  }
+}
+function resetTilt(card){
+  card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg)';
+  var shine = card.querySelector('.holo-shine');
+  if(shine){
+    shine.style.setProperty('--mx', '50%');
+    shine.style.setProperty('--my', '50%');
+  }
+}
+
+// Card click: glow pulse + flip hint
+function flipCard(card){
+  card.classList.add('glow');
+  setTimeout(function(){ card.classList.remove('glow'); }, 600);
+}
+
+// Hover flip: show back info as overlay tooltip
+(function addHoverFlip(){
+  var cards = document.querySelectorAll('.project-card:not(.gym-sub):not(.gym-main)');
+  cards.forEach(function(card, idx){
+    var infos = [
+      '多维度数据筛选/实时更新/自定义图表。独立完成前端架构，覆盖 20+ 图表组件。',
+      'Git 自动构建→测试→部署。团队发布周期从 2 天缩短到 2 小时。',
+      '设计 Token 体系/无障碍适配/单测 90%。被 3 个业务团队采用。',
+      'SSR 首屏 0.8s/Markdown 预览/评论系统。日均 UV 500+。'
+    ];
+    var tip = document.createElement('div');
+    tip.className = 'flip-tooltip';
+    tip.style.cssText = 'position:absolute;bottom:110%;left:50%;transform:translateX(-50%);background:var(--g0);color:var(--g3);padding:8px 12px;font-family:var(--pixel);font-size:8px;line-height:1.6;border:2px solid var(--g2);box-shadow:3px 3px 0 var(--g1);white-space:normal;width:220px;text-align:center;pointer-events:none;opacity:0;transition:opacity .25s;z-index:20;letter-spacing:.5px;';
+    tip.textContent = infos[idx]||'';
+    card.style.position = 'relative';
+    card.appendChild(tip);
+    card.addEventListener('mouseenter', function(){ tip.style.opacity = '1'; });
+    card.addEventListener('mouseleave', function(){ tip.style.opacity = '0'; });
+  });
+})();
+
+// ============================================================
+// ============================================================
+//  MINI MAP
+// ============================================================
+(function drawMiniMap(){
+  var mapCanvas = document.getElementById('map-canvas');
+  if(!mapCanvas) return;
+  var ctx = mapCanvas.getContext('2d');
+  var w=120, h=90;
+
+  // Background
+  ctx.fillStyle='#e0f0d0';
+  ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='#306230';
+  ctx.lineWidth=2;
+  ctx.strokeRect(2,2,w-4,h-4);
+
+  // Water area (bottom)
+  ctx.fillStyle='#c8e0d8';
+  ctx.fillRect(2,h-25,w-4,23);
+
+  // Simplified Kanto landmass
+  ctx.fillStyle='#d8ebc8';
+  ctx.beginPath();
+  ctx.moveTo(15,20);ctx.lineTo(50,12);ctx.lineTo(95,15);
+  ctx.lineTo(105,30);ctx.lineTo(100,50);ctx.lineTo(85,55);
+  ctx.lineTo(60,65);ctx.lineTo(40,62);ctx.lineTo(20,55);
+  ctx.lineTo(10,40);ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#306230';
+  ctx.lineWidth=1;
+  ctx.stroke();
+
+  // Route lines
+  ctx.strokeStyle='#8bac0f';ctx.lineWidth=1.8;
+  ctx.setLineDash([3,2]);
+  ctx.beginPath();ctx.moveTo(35,35);ctx.lineTo(55,45);ctx.lineTo(75,38);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Towns
+  var towns=[
+    {x:32,y:28,r:3.5,label:'真新镇',active:true},
+    {x:52,y:22,r:3.0,label:'研究所'},
+    {x:65,y:30,r:3.0,label:'森林'},
+    {x:55,y:45,r:3.5,label:'殿堂',active:true},
+    {x:40,y:55,r:3.0,label:'中心'},
+    {x:38,y:42,r:3.5,label:'终点',active:true}
+  ];
+  towns.forEach(function(t){
+    ctx.beginPath();
+    ctx.arc(t.x,t.y,t.r,0,Math.PI*2);
+    ctx.fillStyle=t.active?'#c8a02a':'#306230';
+    ctx.fill();
+    ctx.strokeStyle=t.active?'#8a6010':'#0f380f';
+    ctx.lineWidth=1;ctx.stroke();
+    // Label
+    ctx.font='6px "Press Start 2P","SimHei",monospace';
+    ctx.fillStyle='#0f380f';
+    ctx.textAlign='center';
+    ctx.fillText(t.label,t.x,t.y-7);
+  });
+
+  // Current location marker (pulsing dot)
+  ctx.beginPath();
+  ctx.arc(35,35,5,0,Math.PI*2);
+  ctx.fillStyle='rgba(200,160,42,0.5)';
+  ctx.fill();
+})();
+
+// ============================================================
+//  PIXEL SNAPPING
+// ============================================================
+document.querySelectorAll('.pixel-card,.skill-tag,.badge-slot,.card-front,.card-back').forEach(function(el){
+  el.style.transform = 'translateZ(0)';
+});
+
+// Trigger oak dialog after loading
+setTimeout(function(){
+  // Oak dialog appears 1s after loading finishes
+}, 3200);
+</script>
+
+</body>
+</html>
